@@ -12,10 +12,11 @@ permissions:
 
 jobs:
   build:
+    name: Build Debug APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -29,36 +30,27 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Find Gradle project
+      - name: Check project
         run: |
-          echo "=== Files ==="
-          find . -maxdepth 4 -type f \
-            \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" \) \
-            -print
+          echo "Checking project structure..."
+          ls -la
+          echo "Checking app folder..."
+          ls -la app || true
 
       - name: Build APK
         run: |
-          PROJECT_DIR=$(dirname "$(find . -name settings.gradle.kts -o -name settings.gradle | head -n 1)")
-
-          if [ -z "$PROJECT_DIR" ] || [ "$PROJECT_DIR" = "." ]; then
-            PROJECT_DIR="."
-          fi
-
-          echo "Project directory: $PROJECT_DIR"
-
-          cd "$PROJECT_DIR"
-
           gradle :app:assembleDebug \
             --stacktrace \
             --no-daemon
 
       - name: Find APK
         run: |
-          find . -type f -name "*.apk" -print
+          echo "APK files:"
+          find app/build/outputs/apk -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MIKA-ZS-LAUCHER-APK
-          path: "**/app/build/outputs/apk/debug/*.apk"
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
